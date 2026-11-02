@@ -43,14 +43,17 @@ exe = os.path.join(tmp, 'tnc')
 subprocess.run([cc, '-O2', '-Wall', '-Wno-unused-function', '-I', tmp, '-o', exe,
                 os.path.join(tmp, 'host_tnc.c')], check=True)
 
-def run_tnc(adc, host=b'', key2_call=None, failw=None):
+def run_tnc(adc, host=b'', key2_call=None, failw=None, extra_env=None):
     a = os.path.join(tmp, 'adc.bin'); hb = os.path.join(tmp, 'host.bin')
     open(a, 'wb').write(struct.pack('<%dH' % len(adc), *adc))
     open(hb, 'wb').write(host)
     args = [exe, os.path.join(tmp, 'kisstnc_assets.bin'), a, hb] + ([key2_call] if key2_call is not None else [])
-    env = dict(os.environ, FAILW=str(failw)) if failw else None
+    env = dict(os.environ, FAILW=str(failw)) if failw else dict(os.environ)
+    env.update(extra_env or {})
     out = subprocess.run(args, env=env,
                          capture_output=True, text=True, check=True).stdout.splitlines()
+    global screen
+    screen = [l for l in out if l.startswith('DRAW N')]  # the text lines drawn (HOST_DRAW=1)
     blob = b''.join(bytes(int(x, 16) for x in l.split()[1:]) for l in out if l.startswith('OUT'))
     frames = []
     global acks
@@ -187,6 +190,15 @@ for tag in (b'\x00\x01', b'\xc0\xdb'):           # the second needs escaping bot
     check('ACKMODE tag %s: echoed once after the frame' % tag.hex(), acks == [tag], 'acks %s' % acks)
 got, tones, tx, _ = tx_case(kiss(body))
 check('no ACKMODE echo for a plain data frame', acks == [], 'acks %s' % acks)
+
+# ---- a host frame that comes while another waits is lost, and counted ----------
+second = build('N0CALL-7', dst='APDR16', info='>second frame')[:-2]
+got, tones, tx = run_tnc([2048] * 9600 * 2, kiss(body) + kiss(second), extra_env={'HOST_DRAW': '1'})
+lost = [l for l in screen if l.split()[4] == '3']
+check('a second host frame while the first waits: one sent', len(tx) == 2, 'keyed %d times' % (len(tx) // 2))
+check('... and the screen counts it as lost', lost and lost[-1].endswith('lost 1'), 'line 3: %s' % lost[-1:])
+got, tones, tx = run_tnc([2048] * 9600 * 2, bytes([FESC, 0, FEND]) + kiss(body), extra_env={'HOST_DRAW': '1'})
+check('a resync (FESC 00 FEND) is no lost frame', not [l for l in screen if 'lost' in l])
 
 # ---- key 2: test frame to the host ---------------------------------------------
 def addr7(call, last):

@@ -38,6 +38,10 @@
  * with its FCS, tail flags. KISS TXDELAY and P are honoured; the other
  * parameters are accepted and ignored.
  *
+ * "lost" on screen (line 3) counts frames dropped: received while two others
+ * waited for the next slot, from the host while another host frame waited
+ * for the channel (the app holds one), or from the host in RX-only mode.
+ *
  * USB link events, counted on screen (line 5) to tell why a link stops:
  * "to" writes the host did not take within 50 ms (data dropped, link kept),
  * "ov" receive ring lapped (host data lost), "re" the host enumerated the
@@ -52,7 +56,8 @@
  * dropped in RX-only mode) the app returns C0 0C hi lo C0, so the host knows
  * when to send the next frame. A host that never sends 0x0C sees no change.
  *
- * Modified for AXLink TNC (2026, TechnikWeber): ACKMODE.
+ * Modified for AXLink TNC (2026, TechnikWeber): ACKMODE; host frames dropped
+ * while another waits are counted.
  */
 
 #include <stdint.h>
@@ -179,7 +184,9 @@ static struct {
     uint8_t  prevKey, spk, rxn, txFlags, persist;
     uint8_t  slot;                     /* housekeeping slots since the last redraw */
     uint8_t  space, ones;              /* modulator: tone, 1 run (bit stuffing)   */
+    uint8_t  kDrop;                    /* host bytes thrown away since the last FEND */
     bool     quit, host, txReady, kIn, kEsc, redraw, sending, rxOnly, ack;
+    bool     kBusy;                    /* ... because a host frame was waiting      */
     uint16_t kLen, nRx, nTx, nLost;
     uint16_t ackTag;                   /* ACKMODE: the waiting frame's tag        */
     uint16_t nTo, nOv, nRe;            /* USB link events (serial_ctl)            */
@@ -295,6 +302,8 @@ static void kissSend(uint8_t cmd,const uint8_t *f,uint16_t n){
  * frame sets txReady, and what follows is dropped until it is sent ---- */
 static void kissByte(uint8_t b){
     if(b==FEND){
+        if(g.kDrop>=16u && g.kBusy){ g.nLost++; g.redraw=true; }   /* a host frame lost to the waiting one */
+        g.kDrop=0; g.kBusy=false;
         if(g.kIn && g.kLen>1u){
             uint8_t cmd=(uint8_t)(g.tx[0]&0x0Fu), v=g.tx[1];
             if(cmd==K_DATA){ if(g.kLen>=16u){ g.txReady=true; g.ack=false; g.redraw=true; } }
@@ -308,7 +317,7 @@ static void kissByte(uint8_t b){
         if(!g.txReady) g.kLen=0;
         return;
     }
-    if(!g.kIn) return;
+    if(!g.kIn){ if(g.kDrop<255u) g.kDrop++; g.kBusy|=g.txReady; return; }
     if(g.kEsc){
         g.kEsc=false;
         if(b==TFEND) b=FEND;
