@@ -2,6 +2,7 @@
 
 <p>
   <img alt="Status: alpha" src="https://img.shields.io/badge/status-alpha-orange">
+  <a href="https://github.com/TechnikWeber/AXLink-TNC/releases"><img alt="release" src="https://img.shields.io/github/v/release/TechnikWeber/AXLink-TNC?include_prereleases&label=release"></a>
   <a href="https://github.com/TechnikWeber/AXLink-TNC/actions/workflows/ci.yml"><img alt="tests" src="https://img.shields.io/github/actions/workflow/status/TechnikWeber/AXLink-TNC/ci.yml?branch=main&label=tests"></a>
   <img alt="Platform: UV-K1 | UV-K5 V3" src="https://img.shields.io/badge/platform-UV--K1%20%7C%20UV--K5%20V3-blue">
   <img alt="Firmware: F4HWN Labs v6.3.0" src="https://img.shields.io/badge/firmware-F4HWN%20Labs%20v6.3.0-blue">
@@ -67,9 +68,12 @@ no Multiboot are needed.
 ## Install
 
 1. Run F4HWN Labs v6.3.0 on the radio.
-2. In [UV Studio](https://armel.github.io/uvstudio/), open **Apps → Community → Install a
+2. Download the zip from [Releases](https://github.com/TechnikWeber/AXLink-TNC/releases)
+   and unzip it (GitHub does not accept `.app` files as release assets). The current one,
+   v0.2.0-alpha.1, has not run on a radio yet: try it on the bench first.
+3. In [UV Studio](https://armel.github.io/uvstudio/), open **Apps → Community → Install a
    .app**, choose `AXLinkTNC.app` and a free slot.
-3. On the radio: `F` + `7`, select **AXLink TNC**, `MENU`.
+4. On the radio: `F` + `7`, select **AXLink TNC**, `MENU`.
 
 Screen, keys and the USB-C connection are those of KISS TNC; see [app/README.md](app/README.md).
 Use a clip-on ferrite at the radio end of the USB cable when transmitting.

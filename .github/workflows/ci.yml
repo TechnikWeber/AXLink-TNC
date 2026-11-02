@@ -54,4 +54,7 @@ jobs:
         run: |
           pre=""
           case "$GITHUB_REF_NAME" in *-*) pre=--prerelease ;; esac   # v0.2.0-alpha.1 and the like
-          gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "AXLink TNC $GITHUB_REF_NAME" --generate-notes $pre
+          # GitHub refuses .app files as release assets: the app goes in a zip.
+          zip -j "AXLinkTNC-$GITHUB_REF_NAME.zip" dist/AXLinkTNC.app dist/AXLinkTNC.app.sha256
+          gh release create "$GITHUB_REF_NAME" "AXLinkTNC-$GITHUB_REF_NAME.zip" dist/AXLinkTNC.app.sha256 \
+            --repo "$GITHUB_REPOSITORY" --title "AXLink TNC $GITHUB_REF_NAME" --generate-notes $pre
