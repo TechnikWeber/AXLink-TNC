@@ -1,0 +1,18 @@
+AXLink TNC
+==========
+
+This product includes the KISS TNC overlay app for the F4HWN firmware,
+Copyright 2026 Johan Denoyer F4WAT, with the demodulator and modulator of
+the APRS RX and APRS TX apps, Copyright 2026 Armel F4HWN, licensed under
+the Apache License, Version 2.0:
+
+  https://github.com/armel/uv-k1-k5v3-firmware-custom (App/apps/kisstnc)
+
+The F4HWN firmware in firmware/ (a git submodule) carries its own LICENSE
+and NOTICE, which apply to it.
+
+Modifications for AXLink TNC: Copyright 2026 TechnikWeber. Modified files
+carry a notice; the git history shows every change against the original.
+
+Attribution in this file does not imply endorsement by Johan Denoyer
+F4WAT, Armel F4HWN or any other contributor.

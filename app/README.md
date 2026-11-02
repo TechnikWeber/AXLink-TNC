@@ -1,3 +1,6 @@
+> **AXLink TNC:** this is the documentation of the original KISS TNC app from F4HWN v6.3.0,
+> which AXLink TNC is based on. The repository README lists what AXLink TNC changes.
+
 # KISS TNC: the radio as the TNC of APRSdroid over USB
 
 The phone runs the APRS application ([APRSdroid](https://github.com/ge0rg/aprsdroid):

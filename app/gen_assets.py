@@ -3,6 +3,8 @@
 # as APRS RX builds them (keep the two in step), and the screen texts.
 #
 #   ./gen_assets.py kisstnc_assets.bin kisstnc_assets.h
+#
+# Modified for AXLink TNC (2026, TechnikWeber): on-screen title.
 import math, os, sys
 sys.dont_write_bytecode = True
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -16,7 +18,7 @@ def cos_table(f):
     return [int(round(127 * math.cos(2 * math.pi * f * n / FS))) for n in range(per)]
 
 a = Assets("KISSTNC")
-a.text("T_TITLE", "KISS TNC")
+a.text("T_TITLE", "AXL TNC")   # fits the 32-pixel title like "KISS TNC"
 # status capsule, by state: transmitting, RX only, host connected, none
 a.table("T_CAPS", ["TX", "RX ONLY", "USB", "NO USB"])
 a.text("T_RX", "RX ")

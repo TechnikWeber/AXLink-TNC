@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Modified for AXLink TNC (2026, TechnikWeber): fixed file prefix, app name and version.
 # Build one overlay-app blob (.app). Invoked by ../../../compile-app.sh inside
 # the uvk1-uvk5v3 Docker image, run from this app's directory. Everything is
 # derived from the directory name; only APP_NAME - the human label baked into
@@ -6,9 +7,9 @@
 # stripped), so "Broadcast FM" -> BroadcastFM.app.
 set -euo pipefail
 
-APP="$(basename "$PWD")"            # breakout, foxhunt, beacon, fm, ...
-APP_NAME="KISS TNC"                # <-- the only per-app line
-APP_VER="0.9"
+APP=kisstnc                        # AXLink TNC keeps the upstream file names, so changes port back as they are
+APP_NAME="AXLink TNC"              # <-- the only per-app line
+APP_VER="0.1"
 APP_API_MIN=3
 APP_VMA=${APP_VMA:-0x20000280}      # pinned overlay VMA (Core/py32f071xb.ld)
 OUT="${APP_NAME// /}"               # blob basename ("Broadcast FM" -> BroadcastFM)

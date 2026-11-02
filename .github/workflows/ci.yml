@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Host tests and AXLinkTNC.app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+      - name: ARM GNU Toolchain 13.3.rel1 (as the F4HWN builds)
+        run: |
+          V=13.3.rel1
+          F=arm-gnu-toolchain-$V-x86_64-arm-none-eabi.tar.xz
+          URL=https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/$V/binrel/$F
+          curl -fsSLO "$URL"
+          curl -fsSLO "$URL.sha256asc"
+          sha256sum -c "$F.sha256asc"
+          sudo mkdir -p /opt/arm-gnu
+          sudo tar -xJf "$F" -C /opt/arm-gnu --strip-components=1
+          echo /opt/arm-gnu/bin >> "$GITHUB_PATH"
+      - run: bash scripts/build.sh
+      - uses: actions/upload-artifact@v7
+        with:
+          name: AXLinkTNC
+          path: dist/
+
+  release:
+    name: Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: AXLinkTNC
+          path: dist
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "AXLink TNC $GITHUB_REF_NAME" --generate-notes
