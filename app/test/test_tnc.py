@@ -200,6 +200,18 @@ check('... and the screen counts it as lost', lost and lost[-1].endswith('lost 1
 got, tones, tx = run_tnc([2048] * 9600 * 2, bytes([FESC, 0, FEND]) + kiss(body), extra_env={'HOST_DRAW': '1'})
 check('a resync (FESC 00 FEND) is no lost frame', not [l for l in screen if 'lost' in l])
 
+# ---- a frame cut off by a USB reset is dropped, not sent truncated ---------------
+def on_air(tones, tx):
+    t_start = tones[0][0]
+    changes = {(t - t_start) // CYC_PER_BIT - 1 for t, _ in tones[1:]}
+    frames, _ = hdlc_decode([0 if k in changes else 1 for k in range(int((tx[1] - t_start) // CYC_PER_BIT))])
+    return frames
+cut = kiss(body)[:40]                         # the radio's USB resets in the middle of a frame
+got, tones, tx = run_tnc([2048] * 9600 * 2, cut + kiss(second), extra_env={'ENUMAT': str(len(cut))})
+sent = on_air(tones, tx) if tx else []
+check('USB reset mid-frame: only the next frame goes out', len(tx) == 2 and sent and sent[0][:-2] == second,
+      'keyed %d times, sent %s' % (len(tx) // 2, [f.hex() for f in sent]))
+
 # ---- key 2: test frame to the host ---------------------------------------------
 def addr7(call, last):
     return bytes(ord(c) << 1 for c in call.ljust(6)[:6]) + bytes([0x60 | last])

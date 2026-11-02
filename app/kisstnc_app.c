@@ -56,8 +56,12 @@
  * dropped in RX-only mode) the app returns C0 0C hi lo C0, so the host knows
  * when to send the next frame. A host that never sends 0x0C sees no change.
  *
+ * A host frame cut off by a USB re-enumeration (RF on the cable resets the
+ * port) or by a lapped receive ring is dropped: the parser waits for the next
+ * FEND instead of letting it close the cut frame and send it truncated.
+ *
  * Modified for AXLink TNC (2026, TechnikWeber): ACKMODE; host frames dropped
- * while another waits are counted.
+ * while another waits are counted; a frame cut off by a USB reset is dropped.
  */
 
 #include <stdint.h>
@@ -274,6 +278,8 @@ static void usbState(void){
     if(st&APP_SERIAL_LOST)    g.nOv++;
     if(st&APP_SERIAL_ENUM)    g.nRe++;
     if(st&(APP_SERIAL_TIMEOUT|APP_SERIAL_LOST|APP_SERIAL_ENUM)) g.redraw=true;
+    /* host bytes lost or a new USB session: a frame being received is cut off */
+    if((st&(APP_SERIAL_LOST|APP_SERIAL_ENUM)) && !g.txReady){ g.kLen=0; g.kIn=false; g.kEsc=false; }
 }
 
 /* ---- KISS out: one frame (a data frame, or an ACKMODE echo), escaped, in
@@ -330,6 +336,7 @@ static void kissByte(uint8_t b){
 static void kissPoll(void){
     uint8_t buf[16];
     uint16_t n=g.A->serial_read(APP_SERIAL_USB,buf,sizeof buf);
+    usbState();                  /* a USB reset or a lapped ring cuts the frame before these bytes */
     for(uint16_t i=0;i<n;i++) kissByte(buf[i]);
 }
 
@@ -677,6 +684,7 @@ void app_main(const app_api_t *api){
     api->delay_ms(50);
     usbState();
     g.nTo=g.nOv=g.nRe=0;        /* count from launch, not the first claim */
+    g.kIn=true;                 /* ... and the first frame still needs no leading FEND */
 
     listen();
 

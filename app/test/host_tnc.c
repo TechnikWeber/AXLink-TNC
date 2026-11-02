@@ -20,9 +20,13 @@ static unsigned char assets[4096]; static size_t nassets;
 uint32_t host_systval(void){ hc += 1250; return SYST_LOAD - (uint32_t)(hc % (SYST_LOAD + 1u)); }
 uint32_t host_adc(void){ return iadc < nadc ? adc[iadc++] : (iadc++, 2048u); }
 
+/* ENUMAT=n: after n host bytes the USB port re-enumerates (as RF on the
+ * cable causes): serial_ctl reports it, and the bytes after it come only then. */
+static size_t enumat; static int enumdone;
 static uint16_t s_read(uint8_t port, void *b, uint16_t len){
     if(port != APP_SERIAL_USB || iadc < hostat) return 0;
-    size_t n = nhin - ihin; if(n > len) n = len;
+    size_t end = (enumat && !enumdone && enumat < nhin) ? enumat : nhin;
+    size_t n = end - ihin; if(n > len) n = len;
     memcpy(b, hin + ihin, n); ihin += n; return (uint16_t)n;
 }
 /* FAILW=n: the n-th write times out (the host did not take it). */
@@ -37,7 +41,9 @@ static bool s_write(uint8_t port, const void *v, uint16_t len){
 static uint8_t s_ctl(uint8_t port, uint32_t baud){
     (void)baud;
     if(port != APP_SERIAL_USB) return 0;
-    uint8_t st = APP_SERIAL_OK | APP_SERIAL_HOST | sevt; sevt = 0; return st;
+    uint8_t st = APP_SERIAL_OK | APP_SERIAL_HOST | sevt; sevt = 0;
+    if(enumat && !enumdone && ihin >= enumat){ st |= APP_SERIAL_ENUM; enumdone = 1; }
+    return st;
 }
 static int key2;                             /* press key 2 once, at 0.5 s */
 static const char *callsign = "N0CALL";
@@ -85,6 +91,7 @@ int main(int argc, char **argv){
     hin = slurp(argv[3], &nhin);
     if(argc > 4){ key2 = 1; callsign = argv[4]; }   /* key 2 test frame, this callsign */
     if(getenv("FAILW")) failw = atoi(getenv("FAILW"));
+    if(getenv("ENUMAT")) enumat = (size_t)atol(getenv("ENUMAT"));
     drawlog = getenv("HOST_DRAW") != NULL;
     if(getenv("HOST_AT")) hostat = (size_t)atol(getenv("HOST_AT"));
     static app_api_t api;
