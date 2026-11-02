@@ -18,7 +18,8 @@
 
 - [ ] Bench test with two UV-K1 on Labs v6.3.0: original KISS TNC against AXLink TNC, with
       AXLink (profiles `f4hwn-kisstnc` and `f4hwn-kisstnc-ackmode`).
-- [ ] First release with `AXLinkTNC.app` and its SHA-256.
+- [ ] First release with `AXLinkTNC.app` and its SHA-256; then add the release badge to the
+      README.
 - [ ] **Entry in the UV Studio Community tab**, after the bench test: Apps → Community →
       Propose an app, with the app running on a radio (UV Studio captures its screen), a
       one-sentence English description (at most 140 characters). The name "AXLink TNC" is

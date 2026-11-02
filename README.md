@@ -1,18 +1,27 @@
-# AXLink TNC
+# AXLink TNC — a KISS TNC app for F4HWN radios
 
-A KISS TNC overlay app for the [F4HWN firmware](https://github.com/armel/uv-k1-k5v3-firmware-custom)
-on the Quansheng UV-K1 and UV-K5 V3, for hosts that send many frames, such as
-[AXLink](https://github.com/TechnikWeber/AXLink) (IPv4 over AX.25). It is based on the
-**KISS TNC** app by Johan Denoyer F4WAT, with the demodulator and modulator of the APRS apps
-by Armel F4HWN. It stays a standard KISS TNC: APRSdroid and any other KISS client work as
-with the original.
+<p>
+  <img alt="Status: alpha" src="https://img.shields.io/badge/status-alpha-orange">
+  <a href="https://github.com/TechnikWeber/AXLink-TNC/actions/workflows/ci.yml"><img alt="tests" src="https://img.shields.io/github/actions/workflow/status/TechnikWeber/AXLink-TNC/ci.yml?branch=main&label=tests"></a>
+  <img alt="Platform: UV-K1 | UV-K5 V3" src="https://img.shields.io/badge/platform-UV--K1%20%7C%20UV--K5%20V3-blue">
+  <img alt="Firmware: F4HWN Labs v6.3.0" src="https://img.shields.io/badge/firmware-F4HWN%20Labs%20v6.3.0-blue">
+  <img alt="Protocol: KISS" src="https://img.shields.io/badge/protocol-KISS-informational">
+  <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-green"></a>
+</p>
 
-## Status
+**The Quansheng UV-K1 / UV-K5 V3 as a KISS modem that keeps up with a host sending many
+frames.**
 
-**Version 0.1 behaves like KISS TNC 0.9 from F4HWN v6.3.0.** Only the name (`AXLink TNC` in
-the Apps menu) and the on-screen title (`AXL TNC`) differ. The extensions below are in
-progress; see [TODO.md](TODO.md). Not released yet, not yet in the UV Studio Community tab,
-not yet run on a radio.
+A KISS TNC overlay app for the [F4HWN firmware](https://github.com/armel/uv-k1-k5v3-firmware-custom),
+for hosts such as [AXLink](https://github.com/TechnikWeber/AXLink) (IPv4 over AX.25). It is
+based on the **KISS TNC** app by Johan Denoyer F4WAT, with the demodulator and modulator of the
+APRS apps by Armel F4HWN. It stays a standard KISS TNC: APRSdroid and any other KISS client work
+as with the original.
+
+> **Status: alpha.** Version 0.1 behaves like KISS TNC 0.9 from F4HWN v6.3.0; only the name
+> (`AXLink TNC` in the Apps menu) and the on-screen title (`AXL TNC`) differ. The extensions
+> below are in progress, see [TODO.md](TODO.md). Not released yet, not yet in the UV Studio
+> Community tab, not yet run on a radio.
 
 ## Planned extensions
 
