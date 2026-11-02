@@ -20,8 +20,8 @@ as with the original.
 
 > **Status: alpha.** Version 0.1 behaves like KISS TNC 0.9 from F4HWN v6.3.0; only the name
 > (`AXLink TNC` in the Apps menu) and the on-screen title (`AXL TNC`) differ. The extensions
-> below are in progress, see [TODO.md](TODO.md). Not released yet, not yet in the UV Studio
-> Community tab, not yet run on a radio.
+> below are planned and not built yet, see [TODO.md](TODO.md). Not released yet, not yet in the
+> UV Studio Community tab, not yet run on a radio.
 
 ![The AXLink TNC screen: left while it sends a frame from the host, right afterwards](docs/images/screen.png)
 
