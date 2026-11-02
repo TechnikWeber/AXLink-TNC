@@ -53,10 +53,16 @@ def run_tnc(adc, host=b'', key2_call=None, failw=None):
                          capture_output=True, text=True, check=True).stdout.splitlines()
     blob = b''.join(bytes(int(x, 16) for x in l.split()[1:]) for l in out if l.startswith('OUT'))
     frames = []
+    global acks
+    acks = []                                     # ACKMODE echoes (command 0x0C): their tags
     for part in blob.split(bytes([FEND])):
         if part:
+            body = part[1:].replace(b'\xdb\xdc', b'\xc0').replace(b'\xdb\xdd', b'\xdb')
+            if part[0] == 0x0C:
+                acks.append(body)
+                continue
             assert part[0] == 0, 'KISS command byte'
-            frames.append(part[1:].replace(b'\xdb\xdc', b'\xc0').replace(b'\xdb\xdd', b'\xdb'))
+            frames.append(body)
     tones = [(int(l.split()[1]), int(l.split()[2])) for l in out if l.startswith('TONE')]
     tx = [(int(l.split()[1])) for l in out if l.startswith(('TXSTART', 'TXEND'))]
     return frames, tones, tx
@@ -168,6 +174,19 @@ changes = {(t - t_start) // CYC_PER_BIT - 1 for t, _ in tones[1:]}
 nbits = (tx[1] - t_start) // CYC_PER_BIT
 frames, lead = hdlc_decode([0 if k in changes else 1 for k in range(nbits)])
 check('TX KISS TXDELAY 30 (300 ms) -> 45 flags', lead == 45, 'lead %d' % lead)
+
+# ---- ACKMODE (0x0C): the frame goes out, then its tag comes back ----------------
+for tag in (b'\x00\x01', b'\xc0\xdb'):           # the second needs escaping both ways
+    got, tones, tx, _ = tx_case(kiss(tag + body, cmd=0x0C))
+    t_start = tones[0][0]
+    changes = {(t - t_start) // CYC_PER_BIT - 1 for t, _ in tones[1:]}
+    nbits = (tx[1] - t_start) // CYC_PER_BIT
+    frames, _ = hdlc_decode([0 if k in changes else 1 for k in range(nbits)])
+    check('ACKMODE tag %s: the frame on air without the tag' % tag.hex(), frames and frames[0] == aprs,
+          'got %s' % (frames[0].hex() if frames else None))
+    check('ACKMODE tag %s: echoed once after the frame' % tag.hex(), acks == [tag], 'acks %s' % acks)
+got, tones, tx, _ = tx_case(kiss(body))
+check('no ACKMODE echo for a plain data frame', acks == [], 'acks %s' % acks)
 
 # ---- key 2: test frame to the host ---------------------------------------------
 def addr7(call, last):

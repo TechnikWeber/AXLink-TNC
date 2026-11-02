@@ -46,6 +46,13 @@
  * Keys: 1 speaker on/off (saved) · 2 send a test frame to the host over USB
  * (checks the link without RF) · 3 RX only: frames from the host are dropped,
  * never transmitted (not saved) · EXIT quit.
+ *
+ * ACKMODE (G8BPQ's KISS extension, command 0x0C), opt-in by the host: the host
+ * sends C0 0C hi lo <frame> C0; once the frame has left the TNC (sent, or
+ * dropped in RX-only mode) the app returns C0 0C hi lo C0, so the host knows
+ * when to send the next frame. A host that never sends 0x0C sees no change.
+ *
+ * Modified for AXLink TNC (2026, TechnikWeber): ACKMODE.
  */
 
 #include <stdint.h>
@@ -126,6 +133,7 @@ static inline volatile uint32_t *hw(uint32_t a){
 #define K_DATA      0u
 #define K_TXDELAY   1u
 #define K_P         2u
+#define K_ACKMODE   12u    /* G8BPQ ACKMODE: 0x0C, a 2-byte tag, the frame */
 
 /* ---- modulator (APRS TX) ---- */
 #define REG_51      0x51   /* sub-audio: 0 = no CTCSS/DCS               */
@@ -171,8 +179,9 @@ static struct {
     uint8_t  prevKey, spk, rxn, txFlags, persist;
     uint8_t  slot;                     /* housekeeping slots since the last redraw */
     uint8_t  space, ones;              /* modulator: tone, 1 run (bit stuffing)   */
-    bool     quit, host, txReady, kIn, kEsc, redraw, sending, rxOnly;
+    bool     quit, host, txReady, kIn, kEsc, redraw, sending, rxOnly, ack;
     uint16_t kLen, nRx, nTx, nLost;
+    uint16_t ackTag;                   /* ACKMODE: the waiting frame's tag        */
     uint16_t nTo, nOv, nRe;            /* USB link events (serial_ctl)            */
     int16_t  rssi;
     uint16_t dupLen;                   /* the last frame accepted: length, FCS, time */
@@ -260,14 +269,14 @@ static void usbState(void){
     if(st&(APP_SERIAL_TIMEOUT|APP_SERIAL_LOST|APP_SERIAL_ENUM)) g.redraw=true;
 }
 
-/* ---- KISS out: one data frame, escaped, in 64-byte USB writes. A write the
- * host does not take ends the frame there: the next one starts with FEND, so
- * the host drops the cut frame and resyncs. ---- */
-static void kissSend(const uint8_t *f,uint16_t n){
+/* ---- KISS out: one frame (a data frame, or an ACKMODE echo), escaped, in
+ * 64-byte USB writes. A write the host does not take ends the frame there: the
+ * next one starts with FEND, so the host drops the cut frame and resyncs. ---- */
+static void kissSend(uint8_t cmd,const uint8_t *f,uint16_t n){
     const app_api_t *A=g.A;
     uint8_t out[64];
     uint8_t k=0;
-    out[k++]=FEND; out[k++]=K_DATA;
+    out[k++]=FEND; out[k++]=cmd;
     for(uint16_t i=0;i<=n;i++){
         if(k>=sizeof(out)-2u){
             if(!A->serial_write(APP_SERIAL_USB,out,k)){ usbState(); return; }
@@ -288,7 +297,10 @@ static void kissByte(uint8_t b){
     if(b==FEND){
         if(g.kIn && g.kLen>1u){
             uint8_t cmd=(uint8_t)(g.tx[0]&0x0Fu), v=g.tx[1];
-            if(cmd==K_DATA){ if(g.kLen>=16u){ g.txReady=true; g.redraw=true; } }
+            if(cmd==K_DATA){ if(g.kLen>=16u){ g.txReady=true; g.ack=false; g.redraw=true; } }
+            else if(cmd==K_ACKMODE){
+                if(g.kLen>=18u){ g.txReady=true; g.ack=true; g.ackTag=(uint16_t)(v<<8|g.tx[2]); g.redraw=true; }
+            }
             else if(cmd==K_TXDELAY){ uint32_t f=v+(v>>1u); g.txFlags=(uint8_t)(f<8u?8u:f>255u?255u:f); }
             else if(cmd==K_P) g.persist=v;
         }
@@ -351,13 +363,21 @@ static uint16_t crc16(const uint8_t *f,uint16_t n){
 
 static void draw(void);
 
+/* ACKMODE: tell the host that the frame with its tag has left the TNC. */
+static void ackHost(void){
+    uint8_t tag[2]={(uint8_t)(g.ackTag>>8),(uint8_t)g.ackTag};
+    if(g.ack) kissSend(K_ACKMODE,tag,2);
+    g.ack=false;
+}
+
 /* The host's frame on the air, then back to RX. */
 static void transmit(void){
     const app_api_t *A=g.A;
-    uint8_t *f=g.tx+1;                        /* after the KISS command byte */
-    uint16_t n=(uint16_t)(g.kLen-1u);
+    uint8_t skip=g.ack?3u:1u;                 /* the KISS command byte, and an ACKMODE tag */
+    uint8_t *f=g.tx+skip;
+    uint16_t n=(uint16_t)(g.kLen-skip);
     g.txReady=false; g.kIn=false; g.kLen=0;
-    if(g.rxOnly || A->tx_state()){ g.nLost++; g.redraw=true; return; }   /* RX only, or TX not allowed on this VFO */
+    if(g.rxOnly || A->tx_state()){ g.nLost++; g.redraw=true; ackHost(); return; }   /* RX only, or TX not allowed on this VFO */
     uint16_t c=crc16(f,n);
     f[n]=(uint8_t)c; f[n+1u]=(uint8_t)(c>>8);
     g.sending=true;
@@ -383,6 +403,7 @@ static void transmit(void){
     g.sending=false;
     g.nTx++;
     g.redraw=true;
+    ackHost();
 }
 
 /* ---- demodulator (APRS RX) ---- */
@@ -549,7 +570,7 @@ static void sendTest(void){
         for(;i<6u && call[i];i++) f[7+i]=(uint8_t)(call[i]<<1);
         for(;i<6u;i++) f[7+i]=' '<<1;
     }
-    kissSend(f,TESTF_LEN);
+    kissSend(K_DATA,f,TESTF_LEN);
 }
 
 /* ---- housekeeping, between frames: keys, frames to the host, TX, screen ---- */
@@ -569,7 +590,7 @@ static void house(bool bz){
 
     for(uint8_t k=0;k<g.rxn;k++){
         frame_t *f=&g.rxq[k];
-        kissSend(f->buf,f->len);
+        kissSend(K_DATA,f->buf,f->len);
         *putCall(g.call,f->buf+7)='\0';
         g.nRx++;
         g.redraw=true;
