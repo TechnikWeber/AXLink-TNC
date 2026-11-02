@@ -14,13 +14,14 @@ uint32_t host_reg[16];
 static uint64_t hc;                          /* cycles since start */
 static uint16_t *adc; static size_t nadc, iadc;
 static uint8_t *hin; static size_t nhin, ihin;
+static size_t hostat;                        /* HOST_AT=n: host bytes only from ADC sample n on */
 static unsigned char assets[4096]; static size_t nassets;
 
 uint32_t host_systval(void){ hc += 1250; return SYST_LOAD - (uint32_t)(hc % (SYST_LOAD + 1u)); }
 uint32_t host_adc(void){ return iadc < nadc ? adc[iadc++] : (iadc++, 2048u); }
 
 static uint16_t s_read(uint8_t port, void *b, uint16_t len){
-    if(port != APP_SERIAL_USB) return 0;
+    if(port != APP_SERIAL_USB || iadc < hostat) return 0;
     size_t n = nhin - ihin; if(n > len) n = len;
     memcpy(b, hin + ihin, n); ihin += n; return (uint16_t)n;
 }
@@ -62,8 +63,14 @@ static void cfgs(const uint8_t *b, uint8_t n){ (void)b; (void)n; }
 static void call(char *b, uint8_t n){ (void)n; strcpy(b, callsign); }
 static void nop(void){} static void nopb(bool b){ (void)b; } static void nop8(uint8_t v){ (void)v; }
 static void dly(uint32_t m){ hc += (uint64_t)m * 48000u; }
-static void pn(const char *s, uint8_t a, uint8_t b, uint8_t l){ (void)s; (void)a; (void)b; (void)l; }
-static void pi(const char *s, uint8_t x, uint8_t l, bool sb, bool f, uint8_t e){ (void)s; (void)x; (void)l; (void)sb; (void)f; (void)e; }
+/* HOST_DRAW=1 prints the drawing calls ("DRAW" lines) for render.py. */
+static int drawlog;
+static void pn(const char *s, uint8_t a, uint8_t b, uint8_t l){ if(drawlog) printf("DRAW N %u %u %u %s\n", a, b, l, s); }
+static void pi(const char *s, uint8_t x, uint8_t l, bool sb, bool f, uint8_t e){ if(drawlog) printf("DRAW I %u %u %d %d %u %s\n", x, l, sb, f, e, s); }
+static void dclear(void){ if(drawlog) printf("DRAW CLEAR\n"); }
+static void dsclear(void){ if(drawlog) printf("DRAW SCLEAR\n"); }
+static void dbat(void){ if(drawlog) printf("DRAW BAT\n"); }
+static void dblit(void){ if(drawlog) printf("DRAW BLIT %llu\n", (unsigned long long)hc); }
 
 #include "app.c"
 
@@ -78,12 +85,14 @@ int main(int argc, char **argv){
     hin = slurp(argv[3], &nhin);
     if(argc > 4){ key2 = 1; callsign = argv[4]; }   /* key 2 test frame, this callsign */
     if(getenv("FAILW")) failw = atoi(getenv("FAILW"));
+    drawlog = getenv("HOST_DRAW") != NULL;
+    if(getenv("HOST_AT")) hostat = (size_t)atol(getenv("HOST_AT"));
     static app_api_t api;
-    api.display_clear = nop; api.status_clear = nop; api.blit_full = nop; api.blit_status = nop;
+    api.display_clear = dclear; api.status_clear = dsclear; api.blit_full = dblit; api.blit_status = nop;
     api.get_key = key; api.delay_ms = dly; api.print_normal = pn; api.print_inverse = pi;
     api.rssi_dbm = rssi; api.bk_read = bkr; api.bk_write = bkw; api.set_agc = nopb; api.set_af = nop8;
     api.audio_path = nopb; api.rx_freq = rxf; api.cfg_load = cfgl; api.cfg_save = cfgs;
-    api.draw_battery = nop; api.battery_sample = nop; api.backlight_on = nop; api.backlight_update = nop;
+    api.draw_battery = dbat; api.battery_sample = nop; api.backlight_on = nop; api.backlight_update = nop;
     api.tx_state = txstate; api.tx_set_params = nop; api.tx_tone = txtone; api.tx_mute = txmute; api.tx_end = nop;
     api.boot_callsign = call; api.ticks_ms = ticks; api.rand32 = rnd; api.asset_read = aread;
     api.serial_read = s_read; api.serial_write = s_write; api.serial_ctl = s_ctl;

@@ -23,6 +23,14 @@ as with the original.
 > below are in progress, see [TODO.md](TODO.md). Not released yet, not yet in the UV Studio
 > Community tab, not yet run on a radio.
 
+![The AXLink TNC screen: left while it sends a frame from the host, right afterwards](docs/images/screen.png)
+
+*Left: sending a frame from the host (`TX`) after three frames received from `N0CALL-9`;
+right: afterwards, with the host connected over USB. Rendered on a PC, not photographed: the
+app's own code runs in the host test harness, and the firmware's drawing services with its
+fonts (`App/apps/af_lcd.py`) draw the LCD (`bash scripts/render-screens.sh`). Placeholder
+callsign; the battery symbol is drawn full.*
+
 ## Planned extensions
 
 All of them are opt-in: a host that does not use them sees the original behaviour.
@@ -69,7 +77,8 @@ Use a clip-on ferrite at the radio end of the USB cable when transmitting.
 ```sh
 git clone --recurse-submodules https://github.com/TechnikWeber/AXLink-TNC.git
 cd AXLink-TNC
-bash scripts/build.sh        # host tests, then dist/AXLinkTNC.app
+bash scripts/build.sh            # host tests, then dist/AXLinkTNC.app
+bash scripts/render-screens.sh   # docs/images/screen.png from the app's own drawing code
 ```
 
 Needs `arm-none-eabi-gcc` (F4HWN uses the ARM GNU Toolchain 13.3.rel1), `python3`, and `gcc`

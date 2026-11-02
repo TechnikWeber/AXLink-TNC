@@ -30,6 +30,8 @@ jobs:
           sudo tar -xJf "$F" -C /opt/arm-gnu --strip-components=1
           echo /opt/arm-gnu/bin >> "$GITHUB_PATH"
       - run: bash scripts/build.sh
+      - name: Screen picture still renders
+        run: bash scripts/render-screens.sh
       - uses: actions/upload-artifact@v7
         with:
           name: AXLinkTNC
