@@ -25,7 +25,9 @@
       one-sentence English description (at most 140 characters). The name "AXLink TNC" is
       free; "KISS TNC+" would not be (names are compared as lower-case letters and digits).
 - [ ] Reply in [Discussion #764](https://github.com/armel/uv-k1-k5v3-firmware-custom/discussions/764)
-      once the extensions are built and tested.
+      once the extensions are built and tested. What we told them, and what to tell them next
+      time, is kept in AXLink's
+      [docs/upstream/README.md](https://github.com/TechnikWeber/AXLink/blob/main/docs/upstream/README.md).
 
 ## F4HWN v7
 
