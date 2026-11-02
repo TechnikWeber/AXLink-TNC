@@ -18,10 +18,10 @@ based on the **KISS TNC** app by Johan Denoyer F4WAT, with the demodulator and m
 APRS apps by Armel F4HWN. It stays a standard KISS TNC: APRSdroid and any other KISS client work
 as with the original.
 
-> **Status: alpha.** Version 0.1 behaves like KISS TNC 0.9 from F4HWN v6.3.0; only the name
-> (`AXLink TNC` in the Apps menu) and the on-screen title (`AXL TNC`) differ. The extensions
-> below are planned and not built yet, see [TODO.md](TODO.md). Not released yet, not yet in the
-> UV Studio Community tab, not yet run on a radio.
+> **Status: alpha.** Version 0.2 is KISS TNC 0.9 from F4HWN v6.3.0 plus the three extensions
+> below: ACKMODE, a counter for host frames lost, and dropping a frame cut off by a USB reset.
+> They pass the host tests (the app's own code against a model of the radio); **the app has not
+> run on a radio yet**. Not yet in the UV Studio Community tab. Open points: [TODO.md](TODO.md).
 
 ![The AXLink TNC screen: left while it sends a frame from the host, right afterwards](docs/images/screen.png)
 
@@ -31,24 +31,26 @@ app's own code runs in the host test harness, and the firmware's drawing service
 fonts (`App/apps/af_lcd.py`) draw the LCD (`bash scripts/render-screens.sh`). Placeholder
 callsign; the battery symbol is drawn full.*
 
-## Planned extensions
+## What it adds to KISS TNC
 
-All of them are opt-in: a host that does not use them sees the original behaviour.
+A host that does not use them sees the original behaviour; APRSdroid works as before.
 
-- **ACKMODE** (G8BPQ's KISS extension, command `0x0C`): the app echoes the host's tag once
-  the frame has been sent, so the host knows when to send the next one.
-- A counter for host frames dropped because another frame was waiting.
-- Drop a frame that a USB re-enumeration cut off, instead of sending it truncated.
-- Identification on request (e.g. KISS SetHardware `0x06`): name, version, maximum frame
-  length, ACKMODE support.
-- The RSSI of each received frame for the host.
+| Extension | What it does | Commit |
+|---|---|---|
+| **ACKMODE** (G8BPQ's KISS extension, command `0x0C`) | The host sends `C0 0C hi lo <frame> C0`; once the frame has left the TNC the app answers `C0 0C hi lo C0`. The host knows when to send the next frame instead of estimating it. A frame dropped in RX-only mode is answered too, so the host never waits forever. | [4a25af6](https://github.com/TechnikWeber/AXLink-TNC/commit/4a25af6) |
+| **Host frames lost** | A frame from the host that arrives while another one waits for the channel is dropped (the app holds one). It is now counted in `lost N` on line 3, like the frames dropped in RX-only mode, so a host that sends too fast shows on the screen. | [ce3a675](https://github.com/TechnikWeber/AXLink-TNC/commit/ce3a675) |
+| **USB reset** | RF on the USB cable at key-up can reset the radio's USB port (`re` on line 5). A frame the host was sending is cut off; the original let the next FEND close it and sent it on air truncated. Now a reset, or a lapped receive ring (`ov`), drops the half frame and the parser waits for the next FEND. | [b9537d4](https://github.com/TechnikWeber/AXLink-TNC/commit/b9537d4) |
 
 Why: the original app holds one frame from the host and reads its 256-byte USB ring at
 16 bytes per 10 ms. That suits APRSdroid (one frame per beacon) but not a host that carries
-IP traffic. Flow control on the USB port itself is part of the resident firmware and cannot
-be done in an app; it is discussed upstream in
+IP traffic. [AXLink](https://github.com/TechnikWeber/AXLink) uses ACKMODE with the profile
+`f4hwn-kisstnc-ackmode` and paces its writes with the original app (`f4hwn-kisstnc`). Flow
+control on the USB port itself is part of the resident firmware and cannot be done in an app;
+it is discussed upstream in
 [Discussion #764](https://github.com/armel/uv-k1-k5v3-firmware-custom/discussions/764).
-Until then AXLink paces its writes, which works with this app and with the original.
+
+Planned next: identification on request (KISS SetHardware `0x06`: name, version, maximum
+frame length, ACKMODE) and the RSSI of each received frame for the host.
 
 ## Runs on
 
@@ -72,6 +74,10 @@ no Multiboot are needed.
 Screen, keys and the USB-C connection are those of KISS TNC; see [app/README.md](app/README.md).
 Use a clip-on ferrite at the radio end of the USB cable when transmitting.
 
+With AXLink: `axlinkd run -call <CALL>-1 -ip 10.73.0.1/24 -port auto -profile
+f4hwn-kisstnc-ackmode` (`-port auto` finds the radio by its USB ID). Any other KISS host works
+without changes; one that sends `0x0C` frames gets the ACKMODE answers.
+
 ## Build
 
 ```sh
@@ -89,9 +95,10 @@ submodule untouched.
 ## Taking the code into KISS TNC
 
 `app/` keeps the file names of `App/apps/kisstnc` in the F4HWN firmware. The first commit is
-the original app, unmodified; every change after it is a separate commit. A change can be
-taken over with `git format-patch` / `git am` (strip the leading `app/`), or copied file by
-file. No pull request is needed for that.
+the original app, unmodified; every change after it is a separate commit (the three
+extensions above are one commit each, with their host tests). A change can be taken over with
+`git format-patch` / `git am` (strip the leading `app/`), or copied file by file. No pull
+request is needed for that.
 
 ## Related
 

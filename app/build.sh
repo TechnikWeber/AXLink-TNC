@@ -9,7 +9,7 @@ set -euo pipefail
 
 APP=kisstnc                        # AXLink TNC keeps the upstream file names, so changes port back as they are
 APP_NAME="AXLink TNC"              # <-- the only per-app line
-APP_VER="0.1"
+APP_VER="0.2"
 APP_API_MIN=3
 APP_VMA=${APP_VMA:-0x20000280}      # pinned overlay VMA (Core/py32f071xb.ld)
 OUT="${APP_NAME// /}"               # blob basename ("Broadcast FM" -> BroadcastFM)
