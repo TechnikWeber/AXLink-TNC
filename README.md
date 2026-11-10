@@ -78,6 +78,11 @@ no Multiboot are needed.
 Screen, keys and the USB-C connection are those of KISS TNC; see [app/README.md](app/README.md).
 Use a clip-on ferrite at the radio end of the USB cable when transmitting.
 
+> [!IMPORTANT]
+> Transmitting needs an **amateur radio licence**. The app is alpha and comes **"as is",
+> without any warranty**; installing apps or firmware on your radio is at your own risk
+> (see [LICENSE](LICENSE)).
+
 With AXLink: `axlinkd run -call <CALL>-1 -ip 10.73.0.1/24 -port auto -profile
 f4hwn-kisstnc-ackmode` (`-port auto` finds the radio by its USB ID). Any other KISS host works
 without changes; one that sends `0x0C` frames gets the ACKMODE answers.
