@@ -2,12 +2,21 @@
 
 <p>
   <img alt="Status: alpha" src="https://img.shields.io/badge/status-alpha-orange">
-  <a href="https://github.com/TechnikWeber/AXLink-TNC/releases"><img alt="release" src="https://img.shields.io/github/v/release/TechnikWeber/AXLink-TNC?include_prereleases&label=release"></a>
+  <a href="https://github.com/TechnikWeber/AXLink-TNC/releases/latest"><img alt="Download" src="https://img.shields.io/github/v/release/TechnikWeber/AXLink-TNC?include_prereleases&label=download&color=2ea44f"></a>
+  <a href="https://github.com/TechnikWeber/AXLink-TNC/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/TechnikWeber/AXLink-TNC/total?color=blue"></a>
+  <a href="https://github.com/TechnikWeber/AXLink-TNC/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/TechnikWeber/AXLink-TNC?style=flat&color=yellow"></a>
   <a href="https://github.com/TechnikWeber/AXLink-TNC/actions/workflows/ci.yml"><img alt="tests" src="https://img.shields.io/github/actions/workflow/status/TechnikWeber/AXLink-TNC/ci.yml?branch=main&label=tests"></a>
   <img alt="Platform: UV-K1 | UV-K5 V3" src="https://img.shields.io/badge/platform-UV--K1%20%7C%20UV--K5%20V3-blue">
   <img alt="Firmware: F4HWN Labs v6.3.0" src="https://img.shields.io/badge/firmware-F4HWN%20Labs%20v6.3.0-blue">
   <img alt="Protocol: KISS" src="https://img.shields.io/badge/protocol-KISS-informational">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-green"></a>
+</p>
+
+<p>
+  <a href="https://github.com/TechnikWeber/AXLink-TNC/releases/latest"><b>Download</b></a> &nbsp;·&nbsp;
+  <a href="https://github.com/TechnikWeber/AXLink"><b>AXLink (the host)</b></a> &nbsp;·&nbsp;
+  <a href="https://technikweber.github.io/2026/vom-handfunkgeraet-ins-netz/"><b>Blog post (German)</b></a> &nbsp;·&nbsp;
+  <a href="https://github.com/TechnikWeber/AXLink-TNC/releases"><b>Releases</b></a>
 </p>
 
 **The Quansheng UV-K1 / UV-K5 V3 as a KISS modem that keeps up with a host sending many
