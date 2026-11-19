@@ -42,4 +42,4 @@
       loader's checks (2026-11-19; not yet on a radio).
 - [x] As KISS TNC 1.0 of v7: the setting is staged after each key, so it survives a switch-off
       inside the app (v7 starts the app again at the next power-on).
-- [ ] A release with that change (the current one, v0.2.0-alpha.1, stages at EXIT only).
+- [x] Released with that change as v0.2.0-alpha.2 (2026-11-19).

@@ -30,7 +30,8 @@ as with the original.
 
 > **Status: alpha.** Version 0.2 is KISS TNC 0.9 from F4HWN v6.3.0 plus the three extensions
 > below: ACKMODE, a counter for host frames lost, and dropping a frame cut off by a USB reset.
-> `main` also has the one change of KISS TNC 1.0 in v7 (the setting is staged after each key).
+> Since v0.2.0-alpha.2 it also has the one change of KISS TNC 1.0 in v7: the setting is staged
+> after each key.
 > They pass the host tests (the app's own code against a model of the radio); **the app has not
 > run on a radio yet**. Not yet in the UV Studio Community tab. Open points: [TODO.md](TODO.md).
 
@@ -74,9 +75,9 @@ frame length, ACKMODE) and the RSSI of each received frame for the host.
 
 The loader checks only the ABI, the API level, the capabilities and the link address; this
 build has ABI 1, API level 3, capability serial and address `0x20000280`, so one file loads on
-all three. Built against F4HWN v7.0.0, v0.2.0-alpha.1 is byte-identical to the release built
-against v6.3.0 (checked 2026-11-19). "Loads" means the loader's checks pass; the app has not
-run on a radio yet. Neither the messenger nor Multiboot is needed.
+all three: built against F4HWN v6.3.0 or v7.0.0 it is the same file, byte for byte (checked
+for v0.2.0-alpha.1 and alpha.2 on 2026-11-19). "Loads" means the loader's checks pass; the app
+has not run on a radio yet. Neither the messenger nor Multiboot is needed.
 
 ## Install
 
@@ -84,10 +85,12 @@ run on a radio yet. Neither the messenger nor Multiboot is needed.
    Labs v6.3.0 on the radio.
 2. Download the zip from [Releases](https://github.com/TechnikWeber/AXLink-TNC/releases)
    and unzip it (GitHub does not accept `.app` files as release assets). The current one,
-   v0.2.0-alpha.1, has not run on a radio yet: try it on the bench first.
+   v0.2.0-alpha.2, has not run on a radio yet: try it on the bench first.
 3. In [UV Studio](https://armel.github.io/uvstudio/), open **Apps → Community → Install a
    .app**, choose `AXLinkTNC.app` and a free slot.
-4. On the radio: `F` + `7`, select **AXLink TNC**, `MENU`.
+4. On the radio: select the VFO with the data frequency (FM; the app runs on the selected VFO,
+   so with the messenger not its APRS VFO), then `F` + `7`, select **AXLink TNC**, `MENU`. On
+   the messenger firmware the messenger pauses until you leave the app with `EXIT`.
 
 Screen, keys and the USB-C connection are those of KISS TNC; see [app/README.md](app/README.md).
 Use a clip-on ferrite at the radio end of the USB cable when transmitting.
@@ -99,7 +102,8 @@ Use a clip-on ferrite at the radio end of the USB cable when transmitting.
 
 With AXLink: `axlinkd run -call <CALL>-1 -ip 10.73.0.1/24 -port auto -profile
 f4hwn-kisstnc-ackmode` (`-port auto` finds the radio by its USB ID). Any other KISS host works
-without changes; one that sends `0x0C` frames gets the ACKMODE answers.
+without changes; one that sends `0x0C` frames gets the ACKMODE answers. Step by step, also
+with the setup page that needs no command line: AXLink's [quick start](https://github.com/TechnikWeber/AXLink/blob/main/docs/QUICKSTART.md).
 
 ## Build
 
