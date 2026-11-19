@@ -19,7 +19,8 @@
 - [ ] Photos or UV Studio screen captures from a radio after the bench test, next to the
       rendered screen in the README.
 
-- [ ] Bench test with two UV-K1 on Labs v6.3.0: original KISS TNC against AXLink TNC, with
+- [ ] Bench test with two UV-K1 on Fusion v7 or the APRS messenger v0.4.0-beta.1: original
+      KISS TNC against AXLink TNC, with
       AXLink (profiles `f4hwn-kisstnc` and `f4hwn-kisstnc-ackmode`).
 - [x] First release with `AXLinkTNC.app` (in a zip) and its SHA-256 (v0.2.0-alpha.1, a
       prerelease: not yet run on a radio).
@@ -35,5 +36,10 @@
 
 ## F4HWN v7
 
-- [ ] When v7.0.0 is tagged: point the submodule at it, rebuild, check ABI and API level.
-      The same app should load on Fusion v7 (ABI 1, overlay address `0x20000280`).
+- [x] The submodule points at v7.0.0. Built against it, `AXLinkTNC.app` v0.2.0-alpha.1 is
+      byte-identical to the release (ABI 1, API level 3 of v7's 4, overlay address
+      `0x20000280`): it loads on Fusion v7 and on the APRS messenger v0.4.0-beta.1 by the
+      loader's checks (2026-11-19; not yet on a radio).
+- [x] As KISS TNC 1.0 of v7: the setting is staged after each key, so it survives a switch-off
+      inside the app (v7 starts the app again at the next power-on).
+- [ ] A release with that change (the current one, v0.2.0-alpha.1, stages at EXIT only).

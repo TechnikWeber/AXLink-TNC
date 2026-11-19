@@ -6,7 +6,7 @@
   <a href="https://github.com/TechnikWeber/AXLink-TNC/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/TechnikWeber/AXLink-TNC/total?color=blue"></a>
   <a href="https://github.com/TechnikWeber/AXLink-TNC/actions/workflows/ci.yml"><img alt="tests" src="https://img.shields.io/github/actions/workflow/status/TechnikWeber/AXLink-TNC/ci.yml?branch=main&label=tests"></a>
   <img alt="Platform: UV-K1 | UV-K5 V3" src="https://img.shields.io/badge/platform-UV--K1%20%7C%20UV--K5%20V3-blue">
-  <img alt="Firmware: F4HWN Labs v6.3.0" src="https://img.shields.io/badge/firmware-F4HWN%20Labs%20v6.3.0-blue">
+  <img alt="Firmware: F4HWN v7 and Labs v6.3.0" src="https://img.shields.io/badge/firmware-F4HWN%20v7%20%7C%20Labs%20v6.3.0-blue">
   <img alt="Protocol: KISS" src="https://img.shields.io/badge/protocol-KISS-informational">
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-green"></a>
 </p>
@@ -14,6 +14,7 @@
 <p>
   <a href="https://github.com/TechnikWeber/AXLink-TNC/releases/latest"><b>Download</b></a> &nbsp;·&nbsp;
   <a href="https://github.com/TechnikWeber/AXLink"><b>AXLink (the host)</b></a> &nbsp;·&nbsp;
+  <a href="https://github.com/TechnikWeber/uv-k1-k5v3-aprs-firmware"><b>APRS messenger firmware</b></a> &nbsp;·&nbsp;
   <a href="https://technikweber.github.io/2026/vom-handfunkgeraet-ins-netz/"><b>Blog post (German)</b></a> &nbsp;·&nbsp;
   <a href="https://github.com/TechnikWeber/AXLink-TNC/releases"><b>Releases</b></a>
 </p>
@@ -29,6 +30,7 @@ as with the original.
 
 > **Status: alpha.** Version 0.2 is KISS TNC 0.9 from F4HWN v6.3.0 plus the three extensions
 > below: ACKMODE, a counter for host frames lost, and dropping a frame cut off by a USB reset.
+> `main` also has the one change of KISS TNC 1.0 in v7 (the setting is staged after each key).
 > They pass the host tests (the app's own code against a model of the radio); **the app has not
 > run on a radio yet**. Not yet in the UV Studio Community tab. Open points: [TODO.md](TODO.md).
 
@@ -63,19 +65,23 @@ frame length, ACKMODE) and the RSSI of each received frame for the host.
 
 ## Runs on
 
-| Firmware | Works | Why |
+| Firmware | Loads | Why |
 |---|---|---|
-| F4HWN **Labs v6.3.0** (original) | yes | overlay-app platform, API level 3 |
-| F4HWN **Fusion v7** (when released) | expected | ABI 1, same overlay address; rebuilt if v7 changes the ABI |
-| Fusion v6.3, other v6.3 editions | no | no app loader |
+| F4HWN **Fusion v7** (v7.0.0) | yes | the app platform is part of Fusion since v7: ABI 1, API level 4, the same overlay address |
+| [APRS messenger](https://github.com/TechnikWeber/uv-k1-k5v3-aprs-firmware) **v0.4.0-beta.1** or later | yes | Fusion v7 plus background APRS messaging; the messenger pauses while the app runs |
+| F4HWN **Labs v6.3.0** | yes | overlay-app platform, API level 3 |
+| Fusion v6.3, other v6.3 editions, the messenger up to v0.3 | no | no app loader |
 
 The loader checks only the ABI, the API level, the capabilities and the link address; this
-build has ABI 1, API level 3, capability serial and address `0x20000280`. No messenger and
-no Multiboot are needed.
+build has ABI 1, API level 3, capability serial and address `0x20000280`, so one file loads on
+all three. Built against F4HWN v7.0.0, v0.2.0-alpha.1 is byte-identical to the release built
+against v6.3.0 (checked 2026-11-19). "Loads" means the loader's checks pass; the app has not
+run on a radio yet. Neither the messenger nor Multiboot is needed.
 
 ## Install
 
-1. Run F4HWN Labs v6.3.0 on the radio.
+1. Run F4HWN Fusion v7, the [APRS messenger](https://github.com/TechnikWeber/uv-k1-k5v3-aprs-firmware) v0.4.0-beta.1 or later, or
+   Labs v6.3.0 on the radio.
 2. Download the zip from [Releases](https://github.com/TechnikWeber/AXLink-TNC/releases)
    and unzip it (GitHub does not accept `.app` files as release assets). The current one,
    v0.2.0-alpha.1, has not run on a radio yet: try it on the bench first.
@@ -106,8 +112,8 @@ bash scripts/render-screens.sh   # docs/images/screen.png from the app's own dra
 
 Needs `arm-none-eabi-gcc` (F4HWN uses the ARM GNU Toolchain 13.3.rel1), `python3`, and `gcc`
 or `clang` for the host tests. `firmware/` is the F4HWN repository as a submodule at the
-release tag the app targets; the build uses a copy of `firmware/App/apps` and leaves the
-submodule untouched.
+release tag the app targets (v7.0.0); the build uses a copy of `firmware/App/apps` and leaves
+the submodule untouched.
 
 ## Taking the code into KISS TNC
 
@@ -122,8 +128,10 @@ request is needed for that.
 - [AXLink](https://github.com/TechnikWeber/AXLink): the host software (Go, GPL-3.0).
   `internal/sim/f4hwnkiss` is a behavioural model of this app used in its tests;
   `internal/pacing` and `internal/tnc` show how a host feeds it.
-- [APRS messenger fork](https://github.com/TechnikWeber/uv-k1-k5v3-aprs-firmware): a
-  separate firmware with background APRS messaging; not needed for this app.
+- [APRS messenger](https://github.com/TechnikWeber/uv-k1-k5v3-aprs-firmware): F4HWN Fusion v7 with background
+  APRS messaging. Since v0.4.0-beta.1 it loads this app too, so one radio carries the
+  messenger and the TNC, in turns: the messenger pauses while the app runs. Not needed for
+  this app.
 
 ## License
 
