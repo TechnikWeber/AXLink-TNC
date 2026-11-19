@@ -65,7 +65,9 @@ static uint16_t aread(uint16_t off, void *buf, uint16_t len){
     memcpy(buf, assets + off, len); return len;
 }
 static void cfgl(uint8_t *b, uint8_t n){ memset(b, 0xFF, n); }
-static void cfgs(const uint8_t *b, uint8_t n){ (void)b; (void)n; }
+static void cfgs(const uint8_t *b, uint8_t n){   /* each staged config: "CFG <hex>" */
+    printf("CFG"); for(uint8_t i = 0; i < n; i++) printf(" %02x", b[i]); printf("\n");
+}
 static void call(char *b, uint8_t n){ (void)n; strcpy(b, callsign); }
 static void nop(void){} static void nopb(bool b){ (void)b; } static void nop8(uint8_t v){ (void)v; }
 static void dly(uint32_t m){ hc += (uint64_t)m * 48000u; }

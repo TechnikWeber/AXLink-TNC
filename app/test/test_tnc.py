@@ -66,6 +66,8 @@ def run_tnc(adc, host=b'', key2_call=None, failw=None, extra_env=None):
                 continue
             assert part[0] == 0, 'KISS command byte'
             frames.append(body)
+    global cfg
+    cfg = [bytes(int(x, 16) for x in l.split()[1:]) for l in out if l.startswith('CFG')]
     tones = [(int(l.split()[1]), int(l.split()[2])) for l in out if l.startswith('TONE')]
     tx = [(int(l.split()[1])) for l in out if l.startswith(('TXSTART', 'TXEND'))]
     return frames, tones, tx
@@ -220,6 +222,14 @@ for call, shown in (('N0CAL', 'N0CAL'), ('', 'NOCALL'), ('N0CALLX', 'N0CALL')):
     want = addr7('APZK1', 0) + addr7(shown, 1) + b'\x03\xf0>UV-K1 KISS TNC test'
     check('key 2 test frame, callsign %-8r -> %s' % (call, shown), got == [want],
           'got %s' % [g.hex() for g in got])
+
+# ---- the setting is staged after each key (as KISS TNC 1.0 in F4HWN v7) ---------
+# v7 restarts the app after a switch-off and keeps only what cfg_save staged.
+run_tnc([2048] * 9600)
+check('only EXIT pressed: the setting is staged once', cfg == [b'\x00'], 'staged %s' % cfg)
+run_tnc([2048] * 9600, key2_call='N0CAL')
+check('key 2, then EXIT: staged at each key, so kept across a switch-off',
+      cfg == [b'\x00', b'\x00'], 'staged %s' % cfg)
 
 # ---- LOOP ----------------------------------------------------------------------
 def tones_to_audio(tones, tend, dev=3000.0):
